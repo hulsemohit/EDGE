@@ -5,6 +5,8 @@ from pathlib import Path
 from tempfile import TemporaryDirectory
 import random
 
+
+from moviepy.editor import VideoFileClip
 import jukemirlib
 import numpy as np
 import torch
@@ -28,27 +30,32 @@ def generate(wav_file, sample_length=10):
     temp_dir = TemporaryDirectory()
     dirname = temp_dir.name
 
-    print(f"Slicing {wav_file}")
+    print("[info]", "generate:", f"slicing...")
     slice_audio(wav_file, 2.5, 5.0, dirname)
     file_list = sorted(glob.glob(f"{dirname}/*.wav"), key=stringintkey)
+    print("[info]", "generate:", f"finished slicing...")
 
     rand_idx = random.randint(0, len(file_list) - sample_size)
     cond_list = []
+    print(f"Slicing {wav_file}")
 
-    print(f"Computing features for {wav_file}")
+    print("[info]", "generate:", f"computing features...")
     for idx, file in enumerate(tqdm(file_list)):
         if not (rand_idx <= idx < rand_idx + sample_size):
             continue
         reps, _ = feature_func(file)
         cond_list.append(reps)
     cond_list = torch.from_numpy(np.array(cond_list))
+    print("[info]", "generate:", f"finished computing features")
 
-    print("Generating dances")
+    print("[info]", "generate:", f"generating dance...")
     data_tuple = None, cond_list, file_list[rand_idx : rand_idx + sample_size]
     model.render_sample(
         data_tuple, "test", "render", render_count=-1, fk_out=None, render=True
     )
-    print("Done")
+    videoClip = VideoFileClip("render/test_sounds.mp4")
+    videoClip.write_gif("render/test_sounds.gif")
+    print("[info]", "generate:", "finished generating dance")
 
     torch.cuda.empty_cache()
     temp_dir.cleanup()
