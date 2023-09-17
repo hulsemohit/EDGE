@@ -9,6 +9,7 @@ if stub.is_inside():
     from fastapi.responses import HTMLResponse
     from fastapi import File, UploadFile
     import subprocess
+    import wave
 
 def apply_fft(data):
     arr = np.array(data[-100:])
@@ -44,10 +45,28 @@ def fastapi_app():
 
     web_app = FastAPI()
     music_beats = []
+    existing_wavs = []
 
     @web_app.post("/uploadfile/")
     async def create_upload_file(wav: WavData):
         f = wav.file
+        outfile = "sounds.wav"
+
+        if len(existing_wavs > 2):
+            existing_wavs.pop(0)
+        existing_wavs.append(f)
+        data = []
+        for file in existing_wavs:
+            w = wave.open(file, 'rb')
+            data.append([w.getparams(), w.readframes(w.getnframes())])
+            w.close()
+
+        output = wave.open(outfile, 'wb')
+        output.setparams(data[0][0])
+        output.writeframes(data[0][1])
+        output.writeframes(data[1][1])
+        output.close()
+
         with open("recent.wav", "wb") as buffer:
             shutil.copyfileobj(f, buffer)
         os.system("DBNBeatTracker -single recent.wav -o beats.txt")
