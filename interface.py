@@ -1,16 +1,21 @@
 import glob
 import os
+from functools import cmp_to_key
+from pathlib import Path
 from tempfile import TemporaryDirectory
+import random
 
+import jukemirlib
 import numpy as np
 import torch
 from tqdm import tqdm
 
-from test import stringintkey
+from args import parse_test_opt
 from data.slice import slice_audio
 from EDGE import EDGE
 from data.audio_extraction.baseline_features import extract as baseline_extract
 from data.audio_extraction.jukebox_features import extract as juke_extract
+
 
 # Adaptation of test
 # feature_type = "baseline" or "jukebox"
