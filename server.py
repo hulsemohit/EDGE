@@ -6,7 +6,7 @@ if stub.is_inside():
     from pydantic import BaseModel
     import numpy as np
     from fastapi import FastAPI, WebSocket
-    from fastapi.responses import HTMLResponse
+    from fastapi.responses import HTMLResponse, PlainTextResponse, FileResponse
     from fastapi import File, UploadFile, BackgroundTasks
     import subprocess
     import wave
@@ -40,18 +40,13 @@ def close_data(mo_data, w_data, timestamp):
     return abs(period - w_period) < 0.1
 
 def call_model():
-    print("INFO:", "call_model()")
     generate("sounds.wav")
 
 
-@stub.function(image=image)
+@stub.function(image=image,gpu="a100",memory=16384)
 @asgi_app()
 def fastapi_app():
     subprocess.Popen(["python3", "EDGE/terrasocket.py"])
-
-    class WavData(BaseModel):
-        file: UploadFile
- #       timestamp: int
 
     web_app = FastAPI()
     music_beats = []
@@ -59,12 +54,13 @@ def fastapi_app():
 
     @web_app.post("/uploadfile/")
     async def create_upload_file(file: UploadFile, background_tasks: BackgroundTasks):
-        print("INFO:", "create_upload_file()")
+        print("[info]", "server:uploadfile:", "received audio snippet")
 
         wav = file.file
         timestamp = 0
 
-        # Beat tracking
+        print("[info]", "server:uploadfile:", "performing beat matching")
+
         with open("recent.wav", "wb") as f:
             shutil.copyfileobj(wav, f)
         os.system("DBNBeatTracker single -o beats.txt recent.wav")
@@ -77,38 +73,35 @@ def fastapi_app():
                 d = json.loads(l)
                 user_data.append([d["x"], d["y"], d["z"]])
 
-        is_user_in_sync = user_data is [] or  close_data(user_data, music_beats, timestamp)
+        is_user_in_sync = len(user_data) <= 1 or close_data(user_data, music_beats, timestamp)
 
-        # Combine wavs into sounds.wav
-        existing_wavs.append(wav)
-        print("INFO:", "existing waves: ", len(existing_wavs))
+        with wave.open("recent.wav", 'rb') as w:
+            existing_wavs.append([w.getparams(), w.readframes(w.getnframes())])
 
-        while len(existing_wavs) > 2: existing_wavs.pop(0)
+        print("[info]", "server:uploadfile:", "existing waves: ", len(existing_wavs))
 
-        if len(existing_wavs) == 2:
-            combined = []
-            with open("tmp0.wav", "wb") as f:
-                shutil.copyfileobj(existing_wavs[0], f)
-            with open("tmp1.wav", "wb") as f:
-                shutil.copyfileobj(existing_wavs[1], f)
-            for f in ["tmp0.wav", "tmp1.wav"]:
-                with wave.open(f, 'rb') as w:
-                    combined.append([w.getparams(), w.readframes(w.getnframes())])
+        while len(existing_wavs) > 3: existing_wavs.pop(0)
 
+        if len(existing_wavs) == 3:
             with wave.open("sounds.wav", 'wb') as output:
-                output.setparams(data[0][0])
-                output.writeframes(data[0][1])
-                output.writeframes(data[1][1])
+                output.setparams(existing_wavs[0][0])
+                output.writeframes(existing_wavs[0][1])
+                output.writeframes(existing_wavs[1][1])
+                output.writeframes(existing_wavs[2][1])
 
-            # Call model flask api background_tasks
+            print("[info]", "server:uploadfile:", "generating new dance")
             background_tasks.add_task(call_model)
 
-        print("INFO:", "reached end of create_upload_file")
-        return is_user_in_sync
+        print("[info]", "server:uploadfile", "reached end of create_upload_file")
+        return PlainTextResponse(str(is_user_in_sync))
 
-    return web_app
+    @web_app.get("/getmoves/")
+    async def get_moves():
+        if os.path.exists("render/test_sounds.mp4"):
+            print("[info]", "server:getmoves:", "sending gif")
+            return FileResponse("render/test_sounds.gif")
+        else:
+            print("[warn]", "server:getmoves:", "cannot send gif, still rendering")
+            return PlainTextResponse(str(False))
 
-    @web_app.get("/")
-    async def get_dance():
-        pass
     return web_app
