@@ -11,7 +11,9 @@ if stub.is_inside():
     import subprocess
     import wave
 
-    from EDGE.interface import generate
+    import sys
+    sys.path.append("EDGE")
+    from interface import generate
 
 def apply_fft(data):
     arr = np.array(data[-100:])
@@ -87,6 +89,6 @@ def fastapi_app():
     return web_app
 
     @web_app.get("/")
-    async def generate_dance():
+    async def get_dance():
         pass
     return web_app

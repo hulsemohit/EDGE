@@ -29,7 +29,7 @@ image = (
     .pip_install("numpy")
     .pip_install("python-multipart")
     .pip_install("websockets")
-    .run_commands(["echo 5"])
+    .run_commands(["echo 1"])
     .run_commands(["git clone https://github.com/hulsemohit/EDGE ~/EDGE"])
     .run_commands(["bash ~/EDGE/download_model.sh"])
     .run_commands(["mkdir ~/EDGE/music"])
