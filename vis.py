@@ -177,6 +177,7 @@ def skeleton_render(
         
         fig = plt.figure()
         ax = fig.add_subplot(projection="3d")
+        ax.set_axis_off()
         
         point = np.array([0, 0, 1])
         normal = np.array([0, 0, 1])
