@@ -176,7 +176,13 @@ def skeleton_render(
         num_steps = poses.shape[0]
         
         fig = plt.figure()
+        fig.set_facecolor('black')
         ax = fig.add_subplot(projection="3d")
+        ax.set_facecolor('black') 
+        ax.grid(False) 
+        ax.w_xaxis.pane.fill = False
+        ax.w_yaxis.pane.fill = False
+        ax.w_zaxis.pane.fill = False
         ax.set_axis_off()
         
         point = np.array([0, 0, 1])
