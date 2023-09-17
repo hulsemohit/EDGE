@@ -17,7 +17,7 @@ from EDGE import EDGE
 from data.audio_extraction.baseline_features import extract as baseline_extract
 from data.audio_extraction.jukebox_features import extract as juke_extract
 
-model = EDGE("jukebox", "~/EDGE/checkpoint.pt")
+model = EDGE("jukebox", "/root/checkpoint.pt")
 model.eval()
 
 # Adaptation of test
