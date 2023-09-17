@@ -7,7 +7,7 @@ if stub.is_inside():
     import numpy as np
     from fastapi import FastAPI, WebSocket
     from fastapi.responses import HTMLResponse
-    from fastapi import File, UploadFile
+    from fastapi import File, UploadFile, BackgroundTasks
     import subprocess
     import wave
 
@@ -35,6 +35,9 @@ def close_data(mo_data, w_data, timestamp):
     w_period /= len(w_data)
     return abs(period - w_period) < 0.1
 
+def call_model():
+    generate("sounds.wav")
+
 
 @stub.function(image=image)
 @asgi_app()
@@ -50,7 +53,7 @@ def fastapi_app():
     existing_wavs = []
 
     @web_app.post("/uploadfile/")
-    async def create_upload_file(wav: WavData):
+    async def create_upload_file(wav: WavData, background_tasks: BackgroundTasks):
         f = wav.file
         outfile = "sounds.wav"
 
@@ -68,6 +71,8 @@ def fastapi_app():
         output.writeframes(data[0][1])
         output.writeframes(data[1][1])
         output.close()
+
+        background_tasks.add_task(call_model)
 
         with open("recent.wav", "wb") as buffer:
             shutil.copyfileobj(f, buffer)
