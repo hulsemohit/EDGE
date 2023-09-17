@@ -192,7 +192,7 @@ def skeleton_render(
         z = (-normal[0] * xx - normal[1] * yy - d) * 1.0 / normal[2]
         # Create lines initially without data
         lines = [
-            ax.plot([], [], [], zorder=10, linewidth=1.5)[0]
+            ax.plot([], [], [], zorder=10, linewidth=6.0)[0]
             for _ in smpl_parents
         ]
         scat = [
