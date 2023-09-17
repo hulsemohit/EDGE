@@ -38,6 +38,7 @@ def close_data(mo_data, w_data, timestamp):
     return abs(period - w_period) < 0.1
 
 def call_model():
+    print("INFO:", "call_model()")
     generate("sounds.wav")
 
 
@@ -48,44 +49,56 @@ def fastapi_app():
 
     class WavData(BaseModel):
         file: UploadFile
-        timestamp: int
+ #       timestamp: int
 
     web_app = FastAPI()
     music_beats = []
     existing_wavs = []
 
     @web_app.post("/uploadfile/")
-    async def create_upload_file(wav: WavData, background_tasks: BackgroundTasks):
-        f = wav.file
-        outfile = "sounds.wav"
+    async def create_upload_file(wavfile: UploadFile, background_tasks: BackgroundTasks):
+        print("INFO:", "create_upload_file()")
 
-        if len(existing_wavs > 2):
-            existing_wavs.pop(0)
-        existing_wavs.append(f)
-        data = []
-        for file in existing_wavs:
-            w = wave.open(file, 'rb')
-            data.append([w.getparams(), w.readframes(w.getnframes())])
-            w.close()
+        wav = wavfile.file
+        timestamp = 0
 
-        output = wave.open(outfile, 'wb')
-        output.setparams(data[0][0])
-        output.writeframes(data[0][1])
-        output.writeframes(data[1][1])
-        output.close()
-
-        background_tasks.add_task(call_model)
-
-        with open("recent.wav", "wb") as buffer:
-            shutil.copyfileobj(f, buffer)
+        # Beat tracking
+        with open("recent.wav", "wb") as f:
+            shutil.copyfileobj(wav, f)
         os.system("DBNBeatTracker -single recent.wav -o beats.txt")
         with open("beats.txt", "r") as f:
             music_beats += [timestamp + float(x) for x in f.read().splitlines()]
+
         with open("terra_output.log", "r") as f:
-            data = f.read().splitlines()
-        if not close_data(data, music_beats, wav.timestamp):
-            return False
-        return True
+            user_data = f.read().splitlines()
+
+        is_user_in_sync = close_data(user_data, music_beats, timestamp)
+
+        # Combine wavs into sounds.wav
+        existing_wavs.append(wav)
+        print("INFO:", "existing waves: ", len(existing_wavs))
+
+        while len(existing_wavs) > 2: existing_wavs.pop(0)
+
+        if len(existing_wavs) >= 2:
+            combined = []
+            for f in existing_wavs:
+                w = wave.open(f, 'rb')
+                combined.append([w.getparams(), w.readframes(w.getnframes())])
+                w.close()
+
+            output = wave.open("sounds.wav", 'wb')
+            output.setparams(data[0][0])
+            output.writeframes(data[0][1])
+            output.writeframes(data[1][1])
+            output.close()
+
+            # Call model flask api background_tasks
+            background_tasks.add_task(call_model)
+
+        print("INFO:", "reached end of create_upload_file")
+        return is_user_in_sync
+
     return web_app
 
     @web_app.get("/")
