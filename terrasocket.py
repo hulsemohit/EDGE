@@ -4,6 +4,7 @@ import asyncio
 import json
 import websockets
 import httpx
+from datetime import datetime
 
 WS_CONNECTION = "wss://ws.tryterra.co/connect"
 
@@ -44,15 +45,25 @@ async def init_ws(token):
         print(websocket)
 
         last_pinged = time.time() 
+        prev_timestamp = 0
         interval = 40000 / 1000
         while True:
             try:
                 message = await websocket.recv()
-                print("↓  " + message)
                 msg = json.loads(message)
-                if "d" in msg and "d" in msg["d"]:
-                    vec = np.array(msg["d"]["d"])
-
+                acc_data = "d" in msg and "d" in msg["d"]
+                if acc_data:
+                    vec = msg["d"]["d"]
+                    ts = msg["d"]["ts"]
+                    # get ts from datetime to timestamp
+                    try: 
+                        stamp = datetime.strptime(ts, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp()
+                        if stamp - prev_timestamp < 0.01:
+                            acc_data = False
+                        else: prev_timestamp = stamp
+                    except:
+                        print("fucked, might cause problem with spacing")
+                        acc_data = False
                 if time.time() - last_pinged > interval:
                     last_pinged = time.time()
                     await heart_beat()                    
@@ -70,6 +81,9 @@ async def init_ws(token):
                     await websocket.send(payload)
                 if msg["op"] == 1:
                     expecting_heart_beat_ack = False
+                if acc_data:
+                    with open("terra_output.log", "a") as f:
+                        f.write(f"{{x: {vec[0]}, y: {vec[1]}, z: {vec[2]}, timestamp: {stamp}}}\n")
             except websockets.exceptions.ConnectionClosed:
                 print("Connection closed")
                 break
