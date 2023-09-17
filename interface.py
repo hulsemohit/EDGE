@@ -13,13 +13,12 @@ from data.audio_extraction.jukebox_features import extract as juke_extract
 
 # Adaptation of test
 # feature_type = "baseline" or "jukebox"
-def generate(wav_file, feature_type="baseline"):
+def generate(wav_file, feature_type="jukebox"):
     feature_func = juke_extract if feature_type == "jukebox" else baseline_extract
     sample_length = 30
     sample_size = int(sample_length / 2.5) - 1
 
     temp_dir = TemporaryDirectory()
-    temp_dir_list.append(temp_dir)
     dirname = temp_dir.name
 
     print(f"Slicing {wav_file}")
@@ -48,6 +47,5 @@ def generate(wav_file, feature_type="baseline"):
     print("Done")
 
     torch.cuda.empty_cache()
-    for temp_dir in temp_dir_list:
-        temp_dir.cleanup()
+    temp_dir.cleanup()
 
