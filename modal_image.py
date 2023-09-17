@@ -23,6 +23,9 @@ image = (
     .run_commands(["git clone https://github.com/hulsemohit/EDGE"])
     .run_commands(["bash EDGE/download_model.sh"])
     .run_commands(["mkdir EDGE/music"])
+    .pip_install("Cython")
+    .pip_install("numpy")
+    .run_commands(["pip install --upgrade --no-deps --force-reinstall --quiet 'git+https://github.com/CPJKU/madmom.git'"])
 )
 
 @stub.function(image=image,gpu="a100",memory=16384,cpu=8.0)
