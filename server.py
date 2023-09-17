@@ -3,9 +3,6 @@ import numpy as np
 
 from pydantic import BaseModel
 
-class WavData(BaseModel):
-    file: File
-    timestamp: int
 
 def apply_fft(data):
     arr = np.array(data[-100:])
@@ -31,25 +28,37 @@ def close_data(mo_data, w_data, timestamp):
 
 
 @stub.function(image=image)
-@wsgi_app()
-def flask_app():
+@asgi_app()
+def fastapi_app():
+
     from fastapi import FastAPI, WebSocket
     from fastapi.responses import HTMLResponse
+    from fastapi import File, UploadFile
+
+    # run terrasocket.py in the background:
+    import subprocess
+    subprocess.Popen(["python3", "terrasocket.py"])
+
+    class WavData(BaseModel):
+        file: UploadFile
+        timestamp: int
 
     web_app = FastAPI()
     music_beats = []
 
-    @app.post("/uploadfile/")
+    @web_app.post("/uploadfile/")
     async def create_upload_file(wav: WavData):
         f = wav.file
         with open("recent.wav", "wb") as buffer:
             shutil.copyfileobj(f, buffer)
         os.system("DBNBeatTracker -single recent.wav -o beats.txt")
         with open("beats.txt", "r") as f:
-            music_beats += [timestamp + float(x) f or x in f.read().splitlines()]
+            music_beats += [timestamp + float(x) for x in f.read().splitlines()]
         with open("terra_output.log", "r") as f:
             data = f.read().splitlines()
         if not close_data(data, music_beats, wav.timestamp):
             return False
         return True
     return web_app
+
+app = fastapi_app()
