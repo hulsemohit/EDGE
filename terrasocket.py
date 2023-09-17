@@ -83,7 +83,7 @@ async def init_ws(token):
                     expecting_heart_beat_ack = False
                 if acc_data:
                     with open("terra_output.log", "a") as f:
-                        f.write(f"{{x: {vec[0]}, y: {vec[1]}, z: {vec[2]}, timestamp: {stamp}}}\n")
+                        f.write(f'{{"x": {vec[0]}, "y": {vec[1]}, "z": {vec[2]}, "timestamp": {stamp}}}\n')
             except websockets.exceptions.ConnectionClosed:
                 print("Connection closed")
                 break

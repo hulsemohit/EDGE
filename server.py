@@ -10,13 +10,16 @@ if stub.is_inside():
     from fastapi import File, UploadFile, BackgroundTasks
     import subprocess
     import wave
+    import json
+    import shutil
 
     import sys
     sys.path.append("EDGE")
     from interface import generate
 
 def apply_fft(data):
-    arr = np.array(data[-100:])
+    print("INFO:", "data", data)
+    arr = np.array(data)
     x, y, z = arr[:, 0], arr[:, 1], arr[:, 2]
     x -= np.mean(x)
     y -= np.mean(y)
@@ -56,21 +59,24 @@ def fastapi_app():
     existing_wavs = []
 
     @web_app.post("/uploadfile/")
-    async def create_upload_file(wavfile: UploadFile, background_tasks: BackgroundTasks):
+    async def create_upload_file(file: UploadFile, background_tasks: BackgroundTasks):
         print("INFO:", "create_upload_file()")
 
-        wav = wavfile.file
+        wav = file.file
         timestamp = 0
 
         # Beat tracking
         with open("recent.wav", "wb") as f:
             shutil.copyfileobj(wav, f)
-        os.system("DBNBeatTracker -single recent.wav -o beats.txt")
+        os.system("DBNBeatTracker single -o beats.txt recent.wav")
         with open("beats.txt", "r") as f:
-            music_beats += [timestamp + float(x) for x in f.read().splitlines()]
+            music_beats = [timestamp + float(x) for x in f.read().splitlines()]
 
         with open("terra_output.log", "r") as f:
-            user_data = f.read().splitlines()
+            user_data = []
+            for l in f.readlines():
+                d = json.loads(l)
+                user_data = [d["x"], d["y"], d["z"]]
 
         is_user_in_sync = close_data(user_data, music_beats, timestamp)
 
