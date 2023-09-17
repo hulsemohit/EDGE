@@ -41,8 +41,7 @@ async def init_ws(token):
     expecting_heart_beat_ack = False
 
     async with websockets.connect(WS_CONNECTION) as websocket:
-        # print("Connection with Terra stablished")
-        # print(websocket)
+        print("[info]", "terra: ", "connection with terra established")
 
         last_pinged = time.time() 
         prev_timestamp = 0
@@ -62,8 +61,9 @@ async def init_ws(token):
                             acc_data = False
                         else: prev_timestamp = stamp
                     except:
-                        print("fucked, might cause problem with spacing")
+                        print("[warn]", "terra", "failed to get timestamp, might cause problem with spacing")
                         acc_data = False
+
                 if time.time() - last_pinged > interval:
                     last_pinged = time.time()
                     await heart_beat()                    
@@ -79,13 +79,16 @@ async def init_ws(token):
                         }
                     })
                     await websocket.send(payload)
+
                 if msg["op"] == 1:
                     expecting_heart_beat_ack = False
+
                 if acc_data:
                     with open("terra_output.log", "a") as f:
                         f.write(f'{{"x": {vec[0]}, "y": {vec[1]}, "z": {vec[2]}, "timestamp": {stamp}}}\n')
+
             except websockets.exceptions.ConnectionClosed:
-                print("Connection with Terra closed")
+                print("[info]", "terra:", "connection with terra closed")
                 break
 
 async def main():
