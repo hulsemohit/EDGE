@@ -190,8 +190,6 @@ def skeleton_render(
         d = -point.dot(normal)
         xx, yy = np.meshgrid(np.linspace(-1.5, 1.5, 2), np.linspace(-1.5, 1.5, 2))
         z = (-normal[0] * xx - normal[1] * yy - d) * 1.0 / normal[2]
-        # plot the plane
-        ax.plot_surface(xx, yy, z, zorder=-11, cmap=cm.twilight)
         # Create lines initially without data
         lines = [
             ax.plot([], [], [], zorder=10, linewidth=1.5)[0]
