@@ -34,8 +34,11 @@ image = (
     .run_commands(["""cd ~ && python3 -c "import jukemirlib; audio = jukemirlib.load_audio('beep.wav'); reps = jukemirlib.extract(audio, layers=[66])" """])
     .run_commands(["touch root/terra_output.log"])
     .pip_install("moviepy")
-    .run_commands(["git clone https://github.com/hulsemohit/EDGE ~/EDGE"])
-    .run_commands(["cd ~/EDGE && bash download_model.sh"])
+    .run_commands([r"""wget --load-cookies /tmp/cookies.txt "https://docs.google.com/uc?export=download&confirm=$(wget --quiet --save-cookies /tmp/cookies.txt --keep-session-cookies --no-check-certificate 'https://docs.google.com/uc?export=download&id=1BAR712cVEqB8GR37fcEihRV_xOC-fZrZ' -O- | sed -rn 's/.*confirm=([0-9A-Za-z_]+).*/\1\n/p')&id=1BAR712cVEqB8GR37fcEihRV_xOC-fZrZ" -O checkpoint.pt && rm -rf /tmp/cookies.txt"""])
+    .run_commands(["mkdir ~/render"])
+    .run_commands(["curl 'https://media.tenor.com/UnFx-k_lSckAAAAM/amalie-steiness.gif' --output ~/render/loading.gif"])
+    .run_commands(["git clone https://github.com/hulsemohit/EDGE ~/EDGE"], force_build=True)
+    .run_commands(["mv checkpoint.pt ~/EDGE/checkpoint.pt"])
 )
 
 @stub.function(image=image,gpu="a100",memory=16384,cpu=8.0)

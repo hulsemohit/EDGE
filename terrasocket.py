@@ -41,7 +41,7 @@ async def init_ws(token):
     expecting_heart_beat_ack = False
 
     async with websockets.connect(WS_CONNECTION) as websocket:
-        print("[info]", "terra: ", "connection with terra established")
+        print("[info]", "terra:", "connection with terra established")
 
         last_pinged = time.time() 
         prev_timestamp = 0

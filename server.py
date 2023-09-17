@@ -13,6 +13,10 @@ if stub.is_inside():
     import json
     import shutil
 
+    from tqdm import tqdm
+    from functools import partialmethod
+    tqdm.__init__ = partialmethod(tqdm.__init__, disable=True)
+
     import sys
     sys.path.append("EDGE")
     from interface import generate
@@ -28,7 +32,7 @@ def apply_fft(data):
     index = np.argmax(combined)
     freq = np.fft.fftfreq(len(combined))[index]
     period = 0.08 * 1 / freq # todo: change to actual width spacing
-    return period
+    return abs(period)
 
 def close_data(mo_data, w_data, timestamp):
     period = apply_fft(mo_data)
@@ -37,13 +41,14 @@ def close_data(mo_data, w_data, timestamp):
     for i in range(1, len(w_data)):
         w_period += w_data[i] - w_data[i-1]
     w_period /= len(w_data)
+    print("[info]", "server:compare", "music:", 60 / w_period, "user:", 60 / period)
     return abs(period - w_period) < 0.1
 
 def call_model():
     generate("sounds.wav")
 
 
-@stub.function(image=image,gpu="a100",memory=16384)
+@stub.function(image=image,gpu="a100",memory=16384,concurrency_limit=1)
 @asgi_app()
 def fastapi_app():
     subprocess.Popen(["python3", "EDGE/terrasocket.py"])
@@ -59,7 +64,13 @@ def fastapi_app():
         wav = file.file
         timestamp = 0
 
-        print("[info]", "server:uploadfile:", "performing beat matching")
+        with open("terra_output.log", "r") as f:
+            user_data = []
+            for l in f.readlines():
+                d = json.loads(l)
+                user_data.append([d["x"], d["y"], d["z"]])
+
+        print("[info]", "server:uploadfile:", "performing beat matching on", len(user_data), "datapoints")
 
         with open("recent.wav", "wb") as f:
             shutil.copyfileobj(wav, f)
@@ -67,11 +78,6 @@ def fastapi_app():
         with open("beats.txt", "r") as f:
             music_beats = [timestamp + float(x) for x in f.read().splitlines()]
 
-        with open("terra_output.log", "r") as f:
-            user_data = []
-            for l in f.readlines():
-                d = json.loads(l)
-                user_data.append([d["x"], d["y"], d["z"]])
 
         is_user_in_sync = len(user_data) <= 1 or close_data(user_data, music_beats, timestamp)
 
@@ -102,6 +108,6 @@ def fastapi_app():
             return FileResponse("render/test_sounds.gif")
         else:
             print("[warn]", "server:getmoves:", "cannot send gif, still rendering")
-            return PlainTextResponse(str(False))
+            return FileResponse("render/loading.gif")
 
     return web_app

@@ -37,7 +37,6 @@ def generate(wav_file, sample_length=10):
 
     rand_idx = random.randint(0, len(file_list) - sample_size)
     cond_list = []
-    print(f"Slicing {wav_file}")
 
     print("[info]", "generate:", f"computing features...")
     for idx, file in enumerate(tqdm(file_list)):
