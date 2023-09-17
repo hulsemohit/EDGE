@@ -35,14 +35,14 @@ async def init_ws(token):
             await websocket.close()
         heart_beat_payload = json.dumps({"op": 0})
         await websocket.send(heart_beat_payload)
-        print("↑  " + heart_beat_payload)
+        # print("↑  " + heart_beat_payload)
         expecting_heart_beat_ack = True
 
     expecting_heart_beat_ack = False
 
     async with websockets.connect(WS_CONNECTION) as websocket:
-        print("Connection Established")
-        print(websocket)
+        # print("Connection with Terra stablished")
+        # print(websocket)
 
         last_pinged = time.time() 
         prev_timestamp = 0
@@ -85,7 +85,7 @@ async def init_ws(token):
                     with open("terra_output.log", "a") as f:
                         f.write(f'{{"x": {vec[0]}, "y": {vec[1]}, "z": {vec[2]}, "timestamp": {stamp}}}\n')
             except websockets.exceptions.ConnectionClosed:
-                print("Connection closed")
+                print("Connection with Terra closed")
                 break
 
 async def main():

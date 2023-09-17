@@ -18,7 +18,6 @@ if stub.is_inside():
     from interface import generate
 
 def apply_fft(data):
-    print("INFO:", "data", data)
     arr = np.array(data)
     x, y, z = arr[:, 0], arr[:, 1], arr[:, 2]
     x -= np.mean(x)
@@ -35,8 +34,8 @@ def close_data(mo_data, w_data, timestamp):
     period = apply_fft(mo_data)
     # get mean distance between beats, and compare to period (not using apply_fft
     w_period = 0
-    for i in range (1, len(w_data)):
-        w_period += w_data[i][1] - w_data[i-1][1]
+    for i in range(1, len(w_data)):
+        w_period += w_data[i] - w_data[i-1]
     w_period /= len(w_data)
     return abs(period - w_period) < 0.1
 
@@ -76,9 +75,9 @@ def fastapi_app():
             user_data = []
             for l in f.readlines():
                 d = json.loads(l)
-                user_data = [d["x"], d["y"], d["z"]]
+                user_data.append([d["x"], d["y"], d["z"]])
 
-        is_user_in_sync = close_data(user_data, music_beats, timestamp)
+        is_user_in_sync = user_data is [] or  close_data(user_data, music_beats, timestamp)
 
         # Combine wavs into sounds.wav
         existing_wavs.append(wav)
@@ -86,18 +85,20 @@ def fastapi_app():
 
         while len(existing_wavs) > 2: existing_wavs.pop(0)
 
-        if len(existing_wavs) >= 2:
+        if len(existing_wavs) == 2:
             combined = []
-            for f in existing_wavs:
-                w = wave.open(f, 'rb')
-                combined.append([w.getparams(), w.readframes(w.getnframes())])
-                w.close()
+            with open("tmp0.wav", "wb") as f:
+                shutil.copyfileobj(existing_wavs[0], f)
+            with open("tmp1.wav", "wb") as f:
+                shutil.copyfileobj(existing_wavs[1], f)
+            for f in ["tmp0.wav", "tmp1.wav"]:
+                with wave.open(f, 'rb') as w:
+                    combined.append([w.getparams(), w.readframes(w.getnframes())])
 
-            output = wave.open("sounds.wav", 'wb')
-            output.setparams(data[0][0])
-            output.writeframes(data[0][1])
-            output.writeframes(data[1][1])
-            output.close()
+            with wave.open("sounds.wav", 'wb') as output:
+                output.setparams(data[0][0])
+                output.writeframes(data[0][1])
+                output.writeframes(data[1][1])
 
             # Call model flask api background_tasks
             background_tasks.add_task(call_model)

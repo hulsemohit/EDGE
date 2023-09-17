@@ -30,7 +30,7 @@ image = (
     .pip_install("python-multipart")
     .pip_install("websockets")
     .pip_install("mido")
-    .run_commands(["touch lol41"])
+    .run_commands(["touch root/terra_output.log lol42"])
     .run_commands(["git clone https://github.com/hulsemohit/EDGE ~/EDGE"])
     .run_commands(["cd root/EDGE && bash download_model.sh"])
 )
