@@ -29,11 +29,9 @@ image = (
     .pip_install("numpy")
     .pip_install("python-multipart")
     .pip_install("websockets")
-    .run_commands(["touch lol4"])
+    .run_commands(["touch lol40"])
     .run_commands(["git clone https://github.com/hulsemohit/EDGE ~/EDGE"])
-    .run_commands(["bash ~/EDGE/download_model.sh"])
-    .run_commands(["cp ~/EDGE/checkpoint.pt . || cp checkpoint.pt ~/EDGE/"])
-    .run_commands(["mkdir ~/EDGE/music"])
+    .run_commands(["cd root/EDGE && bash download_model.sh"])
 )
 
 @stub.function(image=image,gpu="a100",memory=16384,cpu=8.0)
