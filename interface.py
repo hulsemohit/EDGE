@@ -10,6 +10,7 @@ import numpy as np
 import torch
 from tqdm import tqdm
 
+from test import stringintkey
 from args import parse_test_opt
 from data.slice import slice_audio
 from EDGE import EDGE
