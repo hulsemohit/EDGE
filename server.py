@@ -1,8 +1,14 @@
-from modal import Image, Stub, wsgi_app
-import numpy as np
+from modal import asgi_app
+from modal_image import image, stub
 
-from pydantic import BaseModel
-
+if stub.is_inside():
+    import os
+    from pydantic import BaseModel
+    import numpy as np
+    from fastapi import FastAPI, WebSocket
+    from fastapi.responses import HTMLResponse
+    from fastapi import File, UploadFile
+    import subprocess
 
 def apply_fft(data):
     arr = np.array(data[-100:])
@@ -30,14 +36,7 @@ def close_data(mo_data, w_data, timestamp):
 @stub.function(image=image)
 @asgi_app()
 def fastapi_app():
-
-    from fastapi import FastAPI, WebSocket
-    from fastapi.responses import HTMLResponse
-    from fastapi import File, UploadFile
-
-    # run terrasocket.py in the background:
-    import subprocess
-    subprocess.Popen(["python3", "terrasocket.py"])
+    subprocess.Popen(["python3", "EDGE/terrasocket.py"])
 
     class WavData(BaseModel):
         file: UploadFile
@@ -61,4 +60,7 @@ def fastapi_app():
         return True
     return web_app
 
-app = fastapi_app()
+    @web_app.post("/uploadfile/")
+    async def generate_dance():
+        subprocess.Popen(["python3", "-c", "from EDGE.interface import generate;", f"generate({fname})"])
+    return web_app
