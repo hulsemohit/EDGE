@@ -17,12 +17,12 @@ from EDGE import EDGE
 from data.audio_extraction.baseline_features import extract as baseline_extract
 from data.audio_extraction.jukebox_features import extract as juke_extract
 
+jukebox_model = EDGE("jukebox", "checkpoint-jukebox.pt")
 
 # Adaptation of test
 # feature_type = "baseline" or "jukebox"
-def generate(wav_file, feature_type="jukebox"):
+def generate(wav_file, sample_length=10, feature_type="jukebox"):
     feature_func = juke_extract if feature_type == "jukebox" else baseline_extract
-    sample_length = 30
     sample_size = int(sample_length / 2.5) - 1
 
     temp_dir = TemporaryDirectory()
@@ -43,7 +43,7 @@ def generate(wav_file, feature_type="jukebox"):
         cond_list.append(reps)
     cond_list = torch.from_numpy(np.array(cond_list))
 
-    model = EDGE(feature_type, f"checkpoint-{feature_type}.pt")
+    model = jukebox_model if feature_type == "jukebox" else EDGE(feature_type, f"checkpoint-{feature_type}.pt")
     model.eval()
 
     print("Generating dances")
