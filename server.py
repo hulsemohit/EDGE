@@ -11,6 +11,8 @@ if stub.is_inside():
     import subprocess
     import wave
 
+    from EDGE.interface import generate
+
 def apply_fft(data):
     arr = np.array(data[-100:])
     x, y, z = arr[:, 0], arr[:, 1], arr[:, 2]
@@ -79,7 +81,7 @@ def fastapi_app():
         return True
     return web_app
 
-    @web_app.post("/uploadfile/")
+    @web_app.get("/")
     async def generate_dance():
-        subprocess.Popen(["python3", "-c", "from EDGE.interface import generate;", f"generate({fname})"])
+        pass
     return web_app

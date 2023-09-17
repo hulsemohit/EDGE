@@ -25,6 +25,7 @@ image = (
     .run_commands(["pip install --upgrade --no-deps --force-reinstall --quiet 'git+https://github.com/CPJKU/madmom.git'"])
     .pip_install("fastapi")
     .pip_install("httpx")
+    .pip_install("wave")
     .pip_install("numpy")
     .pip_install("python-multipart")
     .pip_install("websockets")
